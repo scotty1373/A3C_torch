@@ -57,15 +57,19 @@ class ac_net(torch.nn.Module):
     def __init__(self, inner_dim):
         super(ac_net, self).__init__()
         self.inner_dim = inner_dim
-        self.actor1 = nn.Linear(inner_dim, 256)
-        self.mu = nn.Linear(256, 1)
-        self.sigma = nn.Linear(256, 1)
-        self.critic1 = nn.Linear(inner_dim, 256)
-        self.value = nn.Linear(256, 1)
+        self.actor1 = nn.Linear(inner_dim, 400)
+        self.mu = nn.Linear(400, 1)
+        self.muact = nn.Tanh()
+        self.sigma = nn.Linear(400, 1)
+        self.critic1 = nn.Linear(inner_dim, 300)
+        self.value = nn.Linear(300, 1)
+        for layer in [self.actor1, self.mu, self.sigma, self.critic1, self.value]:
+            nn.init.normal_(layer.weight, mean=0, std=0.1)
+            nn.init.constant_(layer.bias, 0.)
 
     def forward(self, input_tensor):
         a1 = F.relu(self.actor1(input_tensor))
-        mu = F.relu6(self.mu(a1))
+        mu = self.muact(self.mu(a1)) * 2
         sigma = F.softplus(self.sigma(a1))
         c1 = F.relu(self.critic1(input_tensor))
         value = self.value(c1)

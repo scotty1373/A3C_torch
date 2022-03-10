@@ -14,8 +14,8 @@ from .utils import gradient_push, pull_weight, record
 T_MAX = 5
 STATE_DIM = 3
 ACTION_BOUND = 2
-MAX_TIMESTEP = 3000
-MAX_EPISODE = 200
+MAX_TIMESTEP = 2000
+MAX_EPISODE = 50
 
 class AC_Net:
     def __init__(self, state_dim, action_bound):
@@ -111,8 +111,9 @@ class AC_Net:
         self.AC.load_state_dict(checkpoint['model'])
 
 class worker(mp.Process):
-    def __init__(self, name, g_net, g_opt, global_ep, global_r, global_res):
+    def __init__(self, name, g_net, g_opt, global_ep, global_r, global_res, worker_id):
         super(worker, self).__init__()
+        self.workerID = worker_id
         self.name = f'{name}'
         self.ac_model = AC_Net(STATE_DIM, ACTION_BOUND)
         self.g_net = g_net
@@ -158,12 +159,12 @@ class worker(mp.Process):
                     self.ac_model.memory.clear()
 
                     if done:
-                        record(self.global_ep, self.global_r, ep_r, self.global_res, self.name)
+                        record(self.global_ep, self.global_r, ep_r, self.global_res, self.name, self.workerID)
                         break
 
                 obs = obs_t1
             worker_ep += 1
-            record(self.global_ep, self.global_r, ep_r, self.global_res, worker_ep, self.name)
+            record(self.global_ep, self.global_r, ep_r, self.global_res, worker_ep, self.name, self.workerID)
         # 训练完成，主线程接收None数据队列空
         self.global_res.put(None)
 

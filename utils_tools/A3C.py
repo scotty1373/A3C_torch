@@ -3,7 +3,7 @@ import math
 
 import gym
 import torch
-from .models import ac_net
+from .models import ac_net, ac_net_lstm
 from torch.distributions import Normal
 from collections import deque
 import torch.multiprocessing as mp

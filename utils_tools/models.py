@@ -76,10 +76,35 @@ class ac_net(torch.nn.Module):
         return mu, sigma, value
 
 
+class ac_net_lstm(torch.nn.Module):
+    def __init__(self, inner_dim):
+        super(ac_net_lstm, self).__init__()
+        self.inner_dim = inner_dim
+        self.lstm = nn.LSTM(3, 128, 1)
+        self.actor1 = nn.Linear(128, 64)
+        self.mu = nn.Linear(64, 1)
+        self.muact = nn.Tanh()
+        self.sigma = nn.Linear(64, 1)
+        self.critic1 = nn.Linear(128, 32)
+        self.value = nn.Linear(32, 1)
+        for layer in [self.actor1, self.mu, self.sigma, self.critic1, self.value]:
+            nn.init.normal_(layer.weight, mean=0, std=0.1)
+            nn.init.constant_(layer.bias, 0.)
+
+    def forward(self, input_tensor):
+        lstm_common, _ = self.lstm(input_tensor.unsqueeze(1))
+        a1 = F.relu(self.actor1(lstm_common.squeeze()))
+        mu = self.muact(self.mu(a1)) * 2
+        sigma = F.softplus(self.sigma(a1))
+        c1 = F.relu(self.critic1(lstm_common.squeeze()))
+        value = self.value(c1)
+        return mu, sigma, value
+
+
 if __name__ == '__main__':
-    model = ac_net(inner_dim=3)
-    x = torch.randn((10, 3))
-    m, s, v = model(x)
+    model = ac_net_lstm(inner_dim=3)
+    x = torch.randn((10, 1, 3))
+    out = model(x)
     print(f'{m}, {s}, {v}')
     model.share_memory()
 

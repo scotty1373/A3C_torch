@@ -10,7 +10,7 @@ from utils_tools.utils import smooth_tsplot
 
 STATE_DIM = 3
 ACTION_BOUND = 2
-THREAD_NUM = 1
+THREAD_NUM = 16
 
 
 if __name__ == '__main__':
